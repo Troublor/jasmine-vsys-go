@@ -3,6 +3,8 @@ package sdk
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"errors"
+	"strconv"
 )
 
 // generateRandomBytes returns securely generated random bytes.
@@ -28,4 +30,8 @@ func generateRandomBytes(n int) ([]byte, error) {
 func generateRandomString(s int) (string, error) {
 	b, err := generateRandomBytes(s)
 	return base64.URLEncoding.EncodeToString(b), err
+}
+
+func vsysResponseError(code int) error {
+	return errors.New("VSYS response error code: " + strconv.Itoa(code))
 }

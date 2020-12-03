@@ -24,17 +24,17 @@ func (sdk *SDK) MinUnit2VSYS(amountInMinUnit int64) (amountInVSYS float32) {
 }
 
 func VSYS2MinUnit(amountInVSYS float32) (amountInMinUnit int64) {
-	amountInMinUnit = int64(amountInVSYS * 1e8)
+	amountInMinUnit = int64(amountInVSYS * TFCUnity)
 	return amountInMinUnit
 }
 
 func MinUnit2VSYS(amountInMinUnit int64) (amountInVSYS float32) {
-	amountInVSYS = float32(amountInMinUnit) / 1e8
+	amountInVSYS = float32(amountInMinUnit) / TFCUnity
 	return amountInVSYS
 }
 
 func (sdk *SDK) CreateAccount() *Account {
-	seed, _ := generateRandomString(64)
+	seed := vsys.GenerateSeed()
 	return createAccount(seed, vsys.NetType(sdk.netType))
 }
 
@@ -58,8 +58,8 @@ func (sdk *SDK) DeployTFC(deployer *Account) (tfcAddressCh chan Address, errCh c
 	go func() {
 		tx := deployer.vsysAcc.BuildRegisterContract(
 			vsys.TokenContract,
-			2000000000,
-			18,
+			TFCTotalSupply,
+			TFCUnity, // TODO since vsystem uses int64, we can't set unity as 10^18 as Ethereum does
 			"TFC",
 			"VSystem blockchain TFC token",
 		)
@@ -71,4 +71,8 @@ func (sdk *SDK) DeployTFC(deployer *Account) (tfcAddressCh chan Address, errCh c
 		}
 	}()
 	return tfcAddressCh, errCh
+}
+
+func (sdk *SDK) TFC(tokenId string) *tfc {
+	return newTFC(tokenId)
 }
