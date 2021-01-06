@@ -90,8 +90,12 @@ func (sdk *SDK) GetTransactionInfo(txId string) (tx transport.Transaction, err e
 	return tx, err
 }
 
-func (sdk *SDK) TFC(tokenId string) *TFC {
+func (sdk *SDK) TFCWithTokenId(tokenId string) *TFC {
 	return NewTFCWithTokenId(tokenId, sdk.Provider)
+}
+
+func (sdk *SDK) TFCWithContractId(contractId string) *TFC {
+	return NewTFCWithContractId(contractId, 0, sdk.Provider)
 }
 
 func (sdk *SDK) WaitForConfirmation(ctx context.Context, txId string, requiredConfirmationNumber int) (doneCh chan transport.Transaction, errCh chan error) {
@@ -112,6 +116,9 @@ func (sdk *SDK) WaitForConfirmation(ctx context.Context, txId string, requiredCo
 					}
 				}
 				return confirmNumber, tx, err
+			}
+			if tx.Status != "Success" {
+				return 0, transport.Transaction{}, sdkErr.NewTransactionFailureErr(tx.Status)
 			}
 			var height transport.LatestHeight
 			err = sdk.Get("/blocks/height", nil, &height)

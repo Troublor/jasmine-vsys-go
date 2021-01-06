@@ -6,6 +6,7 @@ import (
 	"strconv"
 )
 
+const VSYSUnity = 1e8
 const TFCUnity = 1e8              // 8 decimal precision
 const TFCTotalSupply int64 = 20e9 // 20 billion TFC supply
 

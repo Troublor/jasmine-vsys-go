@@ -15,3 +15,21 @@ func NewError(msg string) Err {
 func (e Err) Error() string {
 	return fmt.Sprintf("SDK error: %s", e.Msg)
 }
+
+var InvalidCallerTxFailure = NewTransactionFailureErr("ContractInvalidCaller")
+
+type TransactionFailureErr struct {
+	Err
+	Reason string
+}
+
+func NewTransactionFailureErr(reason string) TransactionFailureErr {
+	return TransactionFailureErr{
+		Err:    Err{Msg: reason},
+		Reason: reason,
+	}
+}
+
+func (e TransactionFailureErr) Error() string {
+	return fmt.Sprintf("Transaction failure: %s", e.Reason)
+}
