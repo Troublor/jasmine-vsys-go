@@ -2,6 +2,7 @@ package sdk
 
 import (
 	"context"
+	"fmt"
 	"github.com/Troublor/jasmine-vsys-go/sdk/transport"
 	"math"
 	"testing"
@@ -138,4 +139,17 @@ func TestSDK_BalanceOf(t *testing.T) {
 	if balance <= 0 {
 		t.Fatal()
 	}
+}
+
+func TestSDK_GetTransactionInfo(t *testing.T) {
+	sdk, err := New(transport.Endpoint[transport.Testnet], transport.Testnet)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	tx, err := sdk.GetTransactionInfo("EkDsc9ipUCXkJk6nWCZNSALmT6F8SiGQJJJcUsgdLSgT")
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(tx)
 }
