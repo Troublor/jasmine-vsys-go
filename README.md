@@ -16,4 +16,6 @@ go get github.com/Troublor/jasmine-vsys-go/...
 
 ## Usage
 
+See [example](example.go)
+
 
