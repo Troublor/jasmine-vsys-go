@@ -1,105 +1,76 @@
 package sdk
 
 import (
+	"github.com/Troublor/jasmine-vsys-go/sdk/transport"
 	"github.com/virtualeconomy/go-v-sdk/vsys"
 	"strconv"
 )
 
-const TFCUnity = 1e8
-const TFCTotalSupply = 20e16
+const TFCUnity = 1e8              // 8 decimal precision
+const TFCTotalSupply int64 = 20e9 // 20 billion TFC supply
 
-type tfc struct {
-	contractId string
-	tokenId    string
+type TFC struct {
+	*transport.Provider
+	ContractId string
+	TokenId    string
 }
 
-func newTFC(tokenId string) *tfc {
-	return &tfc{
-		contractId: vsys.TokenId2ContractId(tokenId),
-		tokenId:    tokenId,
+func NewTFCWithTokenId(tokenId string, provider *transport.Provider) *TFC {
+	return &TFC{
+		Provider:   provider,
+		ContractId: vsys.TokenId2ContractId(tokenId),
+		TokenId:    tokenId,
 	}
 }
 
-func (t *tfc) ClaimTFCSync(recipient Address, amount int64, admin *Account) error {
-	doneCh, errCh := t.ClaimTFC(recipient, amount, admin)
-	select {
-	case <-doneCh:
-		return nil
-	case err := <-errCh:
-		return err
+func NewTFCWithContractId(contractId string, tokenIndex int, provider *transport.Provider) *TFC {
+	return &TFC{
+		Provider:   provider,
+		ContractId: contractId,
+		TokenId:    vsys.ContractId2TokenId(contractId, tokenIndex),
 	}
 }
 
-func (t *tfc) ClaimTFC(recipient Address, amount int64, admin *Account) (doneCh chan interface{}, errCh chan error) {
-	doneCh = make(chan interface{}, 1)
-	errCh = make(chan error, 1)
-	go func() {
-		contract := vsys.Contract{
-			Amount: amount,
-		}
-		funcData := contract.BuildIssueData()
-		tx := admin.vsysAcc.BuildExecuteContract(
-			t.contractId,
-			vsys.FuncidxIssue,
-			funcData,
-			recipient+" claims "+strconv.FormatInt(amount, 10)+" TFC",
-		)
-		resp, err := vsys.SendExecuteContractTx(tx)
-		if err != nil {
-			errCh <- err
-			return
-		}
-		if resp.Error != 0 {
-			errCh <- vsysResponseError(resp.Error)
-			return
-		}
-		close(doneCh)
-	}()
-	return doneCh, errCh
+func (t *TFC) Mint(recipient Address, amount int64, admin *Account) (txId string, err error) {
+	contract := vsys.Contract{
+		Amount: amount,
+	}
+	funcData := contract.BuildIssueData()
+	tx := admin.vsysAcc.BuildExecuteContract(
+		t.ContractId,
+		vsys.FuncidxIssue,
+		funcData,
+		recipient+" claims "+strconv.FormatInt(amount, 10)+" TFC",
+	)
+	var resp vsys.TransactionResponse
+	err = t.Post("/contract/broadcast/execute", nil, tx, &resp)
+	if err != nil {
+		return "", err
+	}
+	return resp.Id, nil
+
 }
 
-func (t *tfc) BalanceOf(address *Account) (balance int64, err error) {
-	bal, err := address.vsysAcc.GetTokenBalance(t.tokenId)
+func (t *TFC) BalanceOf(address Address) (int64, error) {
+	var balance transport.TokenBalance
+	err := t.Get("/contract/balance/"+address+"/"+t.TokenId, nil, &balance)
 	if err != nil {
 		return 0, err
 	}
-	if bal.Error != 0 {
-		return 0, vsysResponseError(bal.Error)
-	}
-	balance = bal.Balance
-	return balance, nil
+	return balance.Balance, nil
 }
 
-func (t *tfc) TransferSync(recipient Address, amount int64, sender *Account) error {
-	doneCh, errCh := t.Transfer(recipient, amount, sender)
-	select {
-	case <-doneCh:
-		return nil
-	case err := <-errCh:
-		return err
+func (t *TFC) Transfer(recipient Address, amount int64, sender *Account) (txId string, err error) {
+	tx := sender.vsysAcc.BuildSendTokenTransaction(
+		t.TokenId,
+		recipient,
+		amount,
+		false,
+		sender.address+" transfer "+strconv.FormatInt(amount, 10)+" to "+recipient)
+	var resp vsys.TransactionResponse
+	err = t.Post("/contract/broadcast/execute", nil, tx, &resp)
+	if err != nil {
+		return "", err
 	}
-}
-
-func (t *tfc) Transfer(recipient Address, amount int64, sender *Account) (doneCh chan interface{}, errCh chan error) {
-	doneCh = make(chan interface{}, 1)
-	errCh = make(chan error, 1)
-	go func() {
-		tx := sender.vsysAcc.BuildSendTokenTransaction(
-			t.tokenId,
-			recipient,
-			amount,
-			false,
-			sender.address+" transfer "+strconv.FormatInt(amount, 10)+" to "+recipient)
-		resp, err := vsys.SendExecuteContractTx(tx)
-		if err != nil {
-			errCh <- err
-			return
-		}
-		if resp.Error != 0 {
-			errCh <- vsysResponseError(resp.Error)
-			return
-		}
-		close(doneCh)
-	}()
-	return doneCh, errCh
+	return resp.Id, nil
 }

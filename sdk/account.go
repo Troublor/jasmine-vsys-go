@@ -2,6 +2,9 @@ package sdk
 
 import "github.com/virtualeconomy/go-v-sdk/vsys"
 
+const testAccountPrivateKey = "Bokp6eDDyiumnxRVVMvWQmRCK6crc1QA3fNBtuN59ubh"
+const testAccountAddress = "ATuNyDibv3n2KpYEKHy56c94kGQdRdT7D7E"
+
 type Address = string
 
 type Account struct {
