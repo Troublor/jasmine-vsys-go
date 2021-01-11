@@ -119,3 +119,36 @@ func TestTFC_Transfer(t *testing.T) {
 		t.Fatal()
 	}
 }
+
+func TestTFC_CheckTransactionFeeDeposit(t *testing.T) {
+	sdk, err := New(transport.Endpoint[transport.Testnet], transport.Testnet)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tfc := sdk.TFCWithTokenId(tokenId)
+
+	txId := "8KqcdXFobra6pAuGKcyVwugvgpuuno7Z4rsHspT5QJ6z"
+	recipient, amount, attachment, err := tfc.CheckTransactionFeeDeposit(context.Background(), txId, 12)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if recipient != "ATvbTiRDQb1jWr2hLG7hTeh8JBdvuHrNqGp" {
+		t.Fatal()
+	}
+	if amount != 30000000 {
+		t.Fatal()
+	}
+	if attachment != "id:123456" {
+		t.Fatal()
+	}
+
+	_, _, _, err = tfc.CheckTransactionFeeDeposit(context.Background(), txId, 99999999999999)
+	if err != sdkErr.UnconfirmedErr {
+		t.Fatal()
+	}
+
+	_, _, _, err = tfc.CheckTransactionFeeDeposit(context.Background(), "8KqcdXFobra6pAuGKcyVwugvgpuuno7Z4rsHspT5QJ6T", 0)
+	if err != sdkErr.NotFoundErr {
+		t.Fatal()
+	}
+}

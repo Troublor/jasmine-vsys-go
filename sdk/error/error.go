@@ -33,3 +33,8 @@ func NewTransactionFailureErr(reason string) TransactionFailureErr {
 func (e TransactionFailureErr) Error() string {
 	return fmt.Sprintf("Transaction failure: %s", e.Reason)
 }
+
+var (
+	NotFoundErr    = NewError("not found")
+	UnconfirmedErr = NewError("do not have enough confirmation")
+)

@@ -1,9 +1,12 @@
 package sdk
 
 import (
+	"context"
+	sdkErr "github.com/Troublor/jasmine-vsys-go/sdk/error"
 	"github.com/Troublor/jasmine-vsys-go/sdk/transport"
 	"github.com/virtualeconomy/go-v-sdk/vsys"
 	"strconv"
+	"strings"
 )
 
 const VSYSUnity = 1e8
@@ -30,6 +33,32 @@ func NewTFCWithContractId(contractId string, tokenIndex int, provider *transport
 		ContractId: contractId,
 		TokenId:    vsys.ContractId2TokenId(contractId, tokenIndex),
 	}
+}
+
+func (t *TFC) CheckTransactionFeeDeposit(ctx context.Context, depositTransactionId string, depositTransactionConfirmationRequirement int) (recipient Address, depositAmount int64, attachment string, err error) {
+	var tx transport.Transaction
+	err = t.Get("/transactions/info/"+depositTransactionId, nil, &tx)
+	if err != nil {
+		if sdkE, ok := err.(transport.VsysErr); ok {
+			if strings.Contains(sdkE.Raw, "Transaction is not in blockchain") {
+				return "", 0, "", sdkErr.NotFoundErr
+			}
+		}
+		return "", 0, "", err
+	}
+	if tx.Status != "Success" {
+		return "", 0, "", sdkErr.NewTransactionFailureErr(tx.Status)
+	}
+	var height transport.LatestHeight
+	err = t.Get("/blocks/height", nil, &height)
+	if err != nil {
+		return "", 0, "", err
+	}
+	confirmNumber := height.Height - tx.Height
+	if confirmNumber < int64(depositTransactionConfirmationRequirement) {
+		return "", 0, "", sdkErr.UnconfirmedErr
+	}
+	return tx.Recipient, tx.Amount, string(vsys.Base58Decode(tx.Attachment)), nil
 }
 
 func (t *TFC) Mint(recipient Address, amount int64, admin *Account) (txId string, err error) {

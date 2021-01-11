@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/Troublor/jasmine-vsys-go/sdk"
+	sdkErr "github.com/Troublor/jasmine-vsys-go/sdk/error"
 	"github.com/Troublor/jasmine-vsys-go/sdk/transport"
 )
 
@@ -49,6 +50,18 @@ func main() {
 	fmt.Println(sdk.TFCTotalSupply) // total supply of TFC Token, 20 billion
 	fmt.Println(sdk.TFCUnity)       // decimal of TFC Token, 1e8, which means 8 decimals.
 	// Note that this is different from Ethereum (18 decimals) due the the limitation of VSystem
+
+	// check deposit transaction
+	txId = "8KqcdXFobra6pAuGKcyVwugvgpuuno7Z4rsHspT5QJ6z"
+	recipient, amount, attachment, err := tfcContract.CheckTransactionFeeDeposit(context.Background(), txId, confirmationRequirement)
+	if err == sdkErr.NotFoundErr {
+		fmt.Println("Transaction not found")
+	} else if err == sdkErr.UnconfirmedErr {
+		fmt.Println("Transaction does not have enough confirmation")
+	} else {
+		fmt.Println("other errors", err)
+	}
+	fmt.Println(recipient, amount, attachment)
 
 	waitForConfirmation := func(txId string) {
 		doneCh, errCh = vsysSdk.WaitForConfirmation(context.Background(), txId, confirmationRequirement)
