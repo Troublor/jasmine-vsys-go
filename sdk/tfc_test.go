@@ -132,7 +132,7 @@ func TestTFC_CheckTransactionFeeDeposit(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if recipient != "ATvbTiRDQb1jWr2hLG7hTeh8JBdvuHrNqGp" {
+	if recipient != "ATuNyDibv3n2KpYEKHy56c94kGQdRdT7D7E" {
 		t.Fatal()
 	}
 	if amount != 30000000 {

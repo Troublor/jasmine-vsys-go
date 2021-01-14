@@ -58,7 +58,7 @@ func (t *TFC) CheckTransactionFeeDeposit(ctx context.Context, depositTransaction
 	if confirmNumber < int64(depositTransactionConfirmationRequirement) {
 		return "", 0, "", sdkErr.UnconfirmedErr
 	}
-	return tx.Recipient, tx.Amount, string(vsys.Base58Decode(tx.Attachment)), nil
+	return tx.Proofs[0].Address, tx.Amount, string(vsys.Base58Decode(tx.Attachment)), nil
 }
 
 func (t *TFC) Mint(recipient Address, amount int64, admin *Account) (txId string, err error) {

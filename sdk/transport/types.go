@@ -31,6 +31,13 @@ type Transaction struct {
 	// override fields
 	Contract map[string]interface{} `json:"contract"`
 
+	Proofs []struct {
+		ProofType string `json:"proofType"`
+		PublicKey string `json:"publicKey"`
+		Address   string `json:"address"`
+		Signature string `json:"signature"`
+	} `json:"proofs"`
+
 	Status     string `json:"status"`
 	FeeCharged int64  `json:"feeCharged"`
 	Height     int64  `json:"height"`
