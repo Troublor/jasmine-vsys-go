@@ -47,16 +47,16 @@ func (t *TFC) CheckTransactionFeeDeposit(ctx context.Context, depositTransaction
 		return "", 0, "", err
 	}
 	if tx.Status != "Success" {
-		return "", 0, "", sdkErr.NewTransactionFailureErr(tx.Status)
+		return tx.Proofs[0].Address, tx.Amount, string(vsys.Base58Decode(tx.Attachment)), sdkErr.NewTransactionFailureErr(tx.Status)
 	}
 	var height transport.LatestHeight
 	err = t.Get("/blocks/height", nil, &height)
 	if err != nil {
-		return "", 0, "", err
+		return tx.Proofs[0].Address, tx.Amount, string(vsys.Base58Decode(tx.Attachment)), err
 	}
 	confirmNumber := height.Height - tx.Height
 	if confirmNumber < int64(depositTransactionConfirmationRequirement) {
-		return "", 0, "", sdkErr.UnconfirmedErr
+		return tx.Proofs[0].Address, tx.Amount, string(vsys.Base58Decode(tx.Attachment)), sdkErr.UnconfirmedErr
 	}
 	return tx.Proofs[0].Address, tx.Amount, string(vsys.Base58Decode(tx.Attachment)), nil
 }
