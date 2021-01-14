@@ -61,7 +61,7 @@ func (t *TFC) CheckTransactionFeeDeposit(ctx context.Context, depositTransaction
 	return tx.Proofs[0].Address, tx.Amount, string(vsys.Base58Decode(tx.Attachment)), nil
 }
 
-func (t *TFC) Mint(recipient Address, amount int64, admin *Account) (txId string, err error) {
+func (t *TFC) Mint(amount int64, admin *Account) (txId string, err error) {
 	contract := vsys.Contract{
 		Amount: amount,
 	}
@@ -70,7 +70,7 @@ func (t *TFC) Mint(recipient Address, amount int64, admin *Account) (txId string
 		t.ContractId,
 		vsys.FuncidxIssue,
 		funcData,
-		recipient+" claims "+strconv.FormatInt(amount, 10)+" TFC",
+		admin.Address()+" claims "+strconv.FormatInt(amount, 10)+" TFC",
 	)
 	var resp vsys.TransactionResponse
 	err = t.Post("/contract/broadcast/execute", nil, tx, &resp)
